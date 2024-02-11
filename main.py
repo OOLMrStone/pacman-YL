@@ -8,7 +8,7 @@ pygame.init()
 WIDTH, HEIGHT = 1000, 600
 BASE_Y_SIZE = HEIGHT // 32  # Y size of each tile
 BASE_X_SIZE = (WIDTH - 350) // 30  # X size of each tile
-DIST = 12  # distance between pacman and something
+DIST = 10  # distance between pacman and something
 
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 timer = pygame.time.Clock()
@@ -29,13 +29,18 @@ pac_images = [pygame.transform.scale(pygame.image.load("pac_1.png"), (24, 24)),
               pygame.transform.scale(pygame.image.load("pac_2.png"), (24, 24))]
 
 directs = {'right': 0, 'left': 1, 'up': 2, 'down': 3}
-direction = directs['right']
+direction = directs['up']
 animation_ctrl = 0
-pac_x, pac_y = 300, 427
+pac_x, pac_y = 302, 427
 pac_speed = 2
+score = 0
+power = False
+pow_timer = 0
 
 # valid turns [right, left, up, down]
-valid_turns = [True, False, False, False]
+valid_turns = [False, False, False, False]
+eaten_ghost = [False, False, False, False]
+wanted_dir = directs['up']
 
 
 def draw_field(layout):
@@ -95,7 +100,7 @@ def draw_pacman():
 def check_pos():
     global valid_turns
     valid_turns = [False, False, False, False]
-    if pac_center[0] // 30 < 29:
+    if pac_center[0] // 30 < 20:
 
         # you always should be able to turn backwards
         if direction == directs['left']:
@@ -132,7 +137,7 @@ def check_pos():
                 if level[(pac_center[1] - BASE_Y_SIZE) // BASE_Y_SIZE][pac_center[0] // BASE_X_SIZE] < 3:
                     valid_turns[2] = True
 
-            if BASE_Y_SIZE // 2 - 2 <= pac_center[1] % BASE_Y_SIZE <= BASE_Y_SIZE // 2 + 2:
+            if BASE_Y_SIZE // 2 - 2 <= pac_center[1] % BASE_Y_SIZE <= BASE_Y_SIZE // 2 + 2 and pac_x < 600:
                 if level[pac_center[1] // BASE_Y_SIZE][(pac_center[0] - DIST) // BASE_X_SIZE] < 3:
                     valid_turns[1] = True
                 if level[pac_center[1] // BASE_Y_SIZE][(pac_center[0] + DIST) // BASE_X_SIZE] < 3:
@@ -143,7 +148,7 @@ def check_pos():
 
 
 def move_pac():
-    global pac_x, pac_y
+    global pac_x, pac_y, direction
 
     if direction == directs['left'] and valid_turns[directs['left']]:
         pac_x -= pac_speed
@@ -155,6 +160,29 @@ def move_pac():
         pac_y += pac_speed
 
 
+def check_collisions():
+    global score, power, pow_timer, eaten_ghost
+
+    if 0 < pac_x < 610:
+        if level[pac_center[1] // BASE_Y_SIZE][pac_center[0] // BASE_X_SIZE] == 1:
+            level[pac_center[1] // BASE_Y_SIZE][pac_center[0] // BASE_X_SIZE] = 0
+            score += 10
+        if level[pac_center[1] // BASE_Y_SIZE][pac_center[0] // BASE_X_SIZE] == 2:
+            level[pac_center[1] // BASE_Y_SIZE][pac_center[0] // BASE_X_SIZE] = 0
+            score += 50
+            power = True
+            pow_timer = 0
+            eaten_ghosts = [False, False, False, False]
+
+
+def draw_ui():
+    score_text = font.render(f"Score: {score:>04}", True, 'white')
+    screen.blit(score_text, (880, 10))
+    if power:
+        power_text = font.render(f"POWER!!!", True, 'blue')
+        screen.blit(power_text, (879, 35))
+
+
 play = True
 while play:
     timer.tick(fps)
@@ -162,24 +190,44 @@ while play:
         animation_ctrl += 1
     else:
         animation_ctrl = 0
+    if power:
+        if pow_timer < 600:
+            pow_timer += 1
+        else:
+            power = False
+            pow_timer = 0
+            eaten_ghost = [False, False, False, False]
+
 
     screen.fill('black')
     draw_field(level)
+    draw_ui()
     draw_pacman()
     pac_center = [pac_x + 12, pac_y + 12]
+
+    check_collisions()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             play = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                direction = directs['right']
+                wanted_dir = directs['right']
             if event.key == pygame.K_LEFT:
-                direction = directs['left']
+                wanted_dir = directs['left']
             if event.key == pygame.K_UP:
-                direction = directs['up']
+                wanted_dir = directs['up']
             if event.key == pygame.K_DOWN:
-                direction = directs['down']
+                wanted_dir = directs['down']
+
+    for some_dir in directs.values():
+        if wanted_dir == some_dir and valid_turns[some_dir]:
+            direction = some_dir
+
+    if pac_x < -50:
+        pac_x = 635
+    elif pac_x > 640:
+        pac_x = -45
     check_pos()
     move_pac()
 
