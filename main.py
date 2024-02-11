@@ -28,10 +28,20 @@ color = "blue"
 pac_images = [pygame.transform.scale(pygame.image.load("pac_1.png"), (24, 24)),
               pygame.transform.scale(pygame.image.load("pac_2.png"), (24, 24))]
 
+# ghost images
+blinky_img = pygame.transform.scale(pygame.image.load('red.png'), (24, 24))
+pinky_img = pygame.transform.scale(pygame.image.load('pink.png'), (24, 24))
+inky_img = pygame.transform.scale(pygame.image.load('blue.png'), (24, 24))
+clyde_img = pygame.transform.scale(pygame.image.load('orange.png'), (24, 24))
+
+spooked_img = pygame.transform.scale(pygame.image.load('powerup.png'), (24, 24))
+dead_img = pygame.transform.scale(pygame.image.load('dead.png'), (24, 24))
+
 directs = {'right': 0, 'left': 1, 'up': 2, 'down': 3}
 direction = directs['up']
 animation_ctrl = 0
 pac_x, pac_y = 302, 427
+pac_center = [pac_x + 12, pac_y + 12]
 pac_speed = 2
 score = 0
 power = False
@@ -41,6 +51,104 @@ pow_timer = 0
 valid_turns = [False, False, False, False]
 eaten_ghost = [False, False, False, False]
 wanted_dir = directs['up']
+
+
+class Ghost:
+    def __init__(self, x, y, direction, img):
+        self.x = x
+        self.y = y
+        self.center = [self.x + 12, self.y + 12]
+        self.direction = direction
+        self.img = img
+        self.target = pac_center
+        self.dead = False
+        self.in_the_box = False
+        self.eaten = False
+        self.valid_turns = [False, False, False, False]
+        self.speed = 2
+        self.draw()
+
+    def draw(self):
+        if self.dead:
+            screen.blit(dead_img, (self.x, self.y))
+        elif power and not self.eaten:
+            screen.blit(spooked_img, (self.x, self.y))
+        else:
+            screen.blit(self.img, (self.x, self.y))
+
+    def check_collisions(self):
+        if self.center[0] // 30 < 20:
+            if level[self.center[1] // BASE_Y_SIZE][(self.center[0] - DIST) // BASE_X_SIZE] < 3:
+                self.valid_turns[directs['left']] = True
+            if level[self.center[1] // BASE_Y_SIZE][(self.center[0] + DIST) // BASE_X_SIZE] < 3:
+                self.valid_turns[directs['right']] = True
+            if level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
+                    level[(self.center[1] + DIST) // BASE_Y_SIZE][
+                        self.center[0] // BASE_X_SIZE] == 9 and (self.in_the_box or self.dead)):
+                self.valid_turns[directs['down']] = True
+            if level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
+                    level[(self.center[1] - DIST) // BASE_Y_SIZE][
+                        self.center[0] // BASE_X_SIZE] == 9 and (self.in_the_box or self.dead)):
+                self.valid_turns[directs['up']] = True
+
+            if self.direction in (directs['up'], directs['down']):
+                if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
+                    if level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
+                            level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9 and (
+                                self.in_the_box or self.dead)):
+                        self.valid_turns[directs['down']] = True
+                if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
+                    if level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
+                            level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9 and (
+                                self.in_the_box or self.dead)):
+                        self.valid_turns[directs['up']] = True
+                if BASE_Y_SIZE - 2 <= self.center[1] % BASE_Y_SIZE <= BASE_Y_SIZE + 2:
+                    if level[self.center[1] // BASE_Y_SIZE][(self.center[0] - BASE_X_SIZE) // BASE_X_SIZE] < 3 or (
+                            level[self.center[1] // BASE_Y_SIZE][(self.center[0] - BASE_X_SIZE) // BASE_X_SIZE] == 9 and (
+                                self.in_the_box or self.dead)):
+                        self.valid_turns[directs['down']] = True
+                if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
+                    if level[self.center[1] // BASE_Y_SIZE][(self.center[0] + BASE_X_SIZE) // BASE_X_SIZE] < 3 or (
+                            level[self.center[1] // BASE_Y_SIZE][(self.center[0] + BASE_X_SIZE) // BASE_X_SIZE] == 9 and (
+                                self.in_the_box or self.dead)):
+                        self.valid_turns[directs['up']] = True
+
+            if self.direction in (directs['left'], directs['right']):
+                if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
+                    if level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
+                            level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9 and (
+                                self.in_the_box or self.dead)):
+                        self.valid_turns[directs['down']] = True
+                if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
+                    if level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
+                            level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9 and (
+                                self.in_the_box or self.dead)):
+                        self.valid_turns[directs['up']] = True
+                if BASE_Y_SIZE - 2 <= self.center[1] % BASE_Y_SIZE <= BASE_Y_SIZE + 2:
+                    if level[self.center[1] // BASE_Y_SIZE][(self.center[0] - DIST) // BASE_X_SIZE] < 3 or (
+                            level[self.center[1] // BASE_Y_SIZE][(self.center[0] - DIST) // BASE_X_SIZE] == 9 and (
+                                self.in_the_box or self.dead)):
+                        self.valid_turns[directs['down']] = True
+                if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
+                    if level[self.center[1] // BASE_Y_SIZE][(self.center[0] + DIST) // BASE_X_SIZE] < 3 or (
+                            level[self.center[1] // BASE_Y_SIZE][(self.center[0] + DIST) // BASE_X_SIZE] == 9 and (
+                                self.in_the_box or self.dead)):
+                        self.valid_turns[directs['up']] = True
+        else:
+            self.valid_turns[directs['right']] = True
+            self.valid_turns[directs['left']] = True
+
+        if self.x < -50:
+            self.x = 635
+        elif self.x > 640:
+            self.x = -45
+
+        if 232 < self.x < 374 and 237 < self.y < 319:
+            self.in_the_box = True
+        else:
+            self.in_the_box = False
+
+        return self.valid_turns, self.in_the_box
 
 
 def draw_field(layout):
@@ -183,6 +291,12 @@ def draw_ui():
         screen.blit(power_text, (879, 35))
 
 
+blinky = Ghost(290, 270, directs['up'], blinky_img)
+pinky = Ghost(280, 280, directs['up'], pinky_img)
+inky = Ghost(300, 280, directs['up'], inky_img)
+clyde = Ghost(310, 260, directs['up'], clyde_img)
+ghosts = [blinky, pinky, inky, clyde]
+
 play = True
 while play:
     timer.tick(fps)
@@ -198,14 +312,16 @@ while play:
             pow_timer = 0
             eaten_ghost = [False, False, False, False]
 
-
     screen.fill('black')
     draw_field(level)
     draw_ui()
     draw_pacman()
     pac_center = [pac_x + 12, pac_y + 12]
-
     check_collisions()
+
+    for ghost in ghosts:
+        ghost.draw()
+        ghost.check_collisions()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
