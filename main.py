@@ -54,18 +54,20 @@ wanted_dir = directs['up']
 
 
 class Ghost:
-    def __init__(self, x, y, direction, img):
+    def __init__(self, x, y, dirt, img, delay):
         self.x = x
         self.y = y
         self.center = [self.x + 12, self.y + 12]
-        self.direction = direction
+        self.direction = dirt
         self.img = img
         self.target = pac_center
+        self.delay = delay
         self.dead = False
-        self.in_the_box = False
+        self.wait = True
+        self.in_the_box = True
         self.eaten = False
         self.valid_turns = [False, False, False, False]
-        self.speed = 2
+        self.speed = 1
         self.draw()
 
     def draw(self):
@@ -77,7 +79,16 @@ class Ghost:
             screen.blit(self.img, (self.x, self.y))
 
     def check_collisions(self):
+        global play
+
+        self.valid_turns = [False, False, False, False]
+        if self.dead:
+            self.valid_turns = [True, True, True, True]
+        self.center = [self.x + 12, self.y + 12]
+
         if self.center[0] // 30 < 20:
+            if level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9:
+                self.valid_turns[directs['up']] = True
             if level[self.center[1] // BASE_Y_SIZE][(self.center[0] - DIST) // BASE_X_SIZE] < 3:
                 self.valid_turns[directs['left']] = True
             if level[self.center[1] // BASE_Y_SIZE][(self.center[0] + DIST) // BASE_X_SIZE] < 3:
@@ -95,44 +106,46 @@ class Ghost:
                 if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
                     if level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
                             level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9 and (
-                                self.in_the_box or self.dead)):
+                            self.in_the_box or self.dead)):
                         self.valid_turns[directs['down']] = True
                 if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
                     if level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
                             level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9 and (
-                                self.in_the_box or self.dead)):
+                            self.in_the_box or self.dead)):
                         self.valid_turns[directs['up']] = True
                 if BASE_Y_SIZE - 2 <= self.center[1] % BASE_Y_SIZE <= BASE_Y_SIZE + 2:
                     if level[self.center[1] // BASE_Y_SIZE][(self.center[0] - BASE_X_SIZE) // BASE_X_SIZE] < 3 or (
-                            level[self.center[1] // BASE_Y_SIZE][(self.center[0] - BASE_X_SIZE) // BASE_X_SIZE] == 9 and (
-                                self.in_the_box or self.dead)):
+                            level[self.center[1] // BASE_Y_SIZE][
+                                (self.center[0] - BASE_X_SIZE) // BASE_X_SIZE] == 9 and (
+                                    self.in_the_box or self.dead)):
                         self.valid_turns[directs['down']] = True
                 if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
                     if level[self.center[1] // BASE_Y_SIZE][(self.center[0] + BASE_X_SIZE) // BASE_X_SIZE] < 3 or (
-                            level[self.center[1] // BASE_Y_SIZE][(self.center[0] + BASE_X_SIZE) // BASE_X_SIZE] == 9 and (
-                                self.in_the_box or self.dead)):
+                            level[self.center[1] // BASE_Y_SIZE][
+                                (self.center[0] + BASE_X_SIZE) // BASE_X_SIZE] == 9 and (
+                                    self.in_the_box or self.dead)):
                         self.valid_turns[directs['up']] = True
 
             if self.direction in (directs['left'], directs['right']):
                 if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
                     if level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
                             level[(self.center[1] + DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9 and (
-                                self.in_the_box or self.dead)):
+                            self.in_the_box or self.dead)):
                         self.valid_turns[directs['down']] = True
                 if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
                     if level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] < 3 or (
                             level[(self.center[1] - DIST) // BASE_Y_SIZE][self.center[0] // BASE_X_SIZE] == 9 and (
-                                self.in_the_box or self.dead)):
+                            self.in_the_box or self.dead)):
                         self.valid_turns[directs['up']] = True
                 if BASE_Y_SIZE - 2 <= self.center[1] % BASE_Y_SIZE <= BASE_Y_SIZE + 2:
                     if level[self.center[1] // BASE_Y_SIZE][(self.center[0] - DIST) // BASE_X_SIZE] < 3 or (
                             level[self.center[1] // BASE_Y_SIZE][(self.center[0] - DIST) // BASE_X_SIZE] == 9 and (
-                                self.in_the_box or self.dead)):
+                            self.in_the_box or self.dead)):
                         self.valid_turns[directs['down']] = True
                 if BASE_X_SIZE - 2 <= self.center[0] % BASE_X_SIZE <= BASE_X_SIZE + 2:
                     if level[self.center[1] // BASE_Y_SIZE][(self.center[0] + DIST) // BASE_X_SIZE] < 3 or (
                             level[self.center[1] // BASE_Y_SIZE][(self.center[0] + DIST) // BASE_X_SIZE] == 9 and (
-                                self.in_the_box or self.dead)):
+                            self.in_the_box or self.dead)):
                         self.valid_turns[directs['up']] = True
         else:
             self.valid_turns[directs['right']] = True
@@ -143,13 +156,186 @@ class Ghost:
         elif self.x > 640:
             self.x = -45
 
-        if 232 < self.x < 374 and 237 < self.y < 319:
+        if 232 < self.x < 374 and 237 < self.y < 300:
             self.in_the_box = True
         else:
             self.in_the_box = False
 
-        return self.valid_turns, self.in_the_box
+        if ((self.center[0] - pac_center[0]) ** 2 + (self.center[1] - pac_center[1]) ** 2) ** 0.5 <= DIST:
+            if power:
+                self.dead = True
+            else:
+                play = False
 
+        if self.dead and self.in_the_box:
+            self.dead = False
+            self.speed = 1
+
+        if len(list(filter(lambda x: x, self.valid_turns))) == 0:
+            self.dead = True
+            self.speed = 6
+
+    def move(self):
+        global directs
+
+        # calculating
+        if self.direction == directs['right']:
+            if self.target[0] > self.x and self.valid_turns[directs['right']]:
+                self.x += self.speed
+            elif not self.valid_turns[directs['right']]:
+                if self.target[1] > self.y and self.valid_turns[directs['down']]:
+                    self.direction = directs['down']
+                    self.y += self.speed
+                elif self.target[1] < self.y and self.valid_turns[directs['up']]:
+                    self.direction = directs['up']
+                    self.y -= self.speed
+                elif self.target[0] < self.x and self.valid_turns[directs['left']]:
+                    self.direction = directs['left']
+                    self.x -= self.speed
+                elif self.valid_turns[directs['down']]:
+                    self.direction = directs['down']
+                    self.y += self.speed
+                elif self.valid_turns[directs['up']]:
+                    self.direction = directs['up']
+                    self.y -= self.speed
+                elif self.valid_turns[directs['left']]:
+                    self.direction = directs['left']
+                    self.x -= self.speed
+            elif self.valid_turns[directs['right']]:
+                if self.target[1] > self.y and self.valid_turns[directs['down']]:
+                    self.direction = directs['down']
+                    self.y += self.speed
+                if self.target[1] < self.y and self.valid_turns[directs['up']]:
+                    self.direction = directs['up']
+                    self.y -= self.speed
+                else:
+                    self.x += self.speed
+        elif self.direction == directs['left']:
+            if self.target[1] > self.y and self.valid_turns[directs['down']]:
+                self.direction = directs['down']
+                self.y += self.speed
+            elif self.target[0] < self.x and self.valid_turns[directs['left']]:
+                self.direction = directs['left']
+                self.x -= self.speed
+            elif not self.valid_turns[directs['left']]:
+                if self.target[1] > self.y and self.valid_turns[directs['down']]:
+                    self.direction = directs['down']
+                    self.y += self.speed
+                elif self.target[1] < self.y and self.valid_turns[directs['up']]:
+                    self.direction = directs['up']
+                    self.y -= self.speed
+                elif self.target[0] > self.x and self.valid_turns[directs['right']]:
+                    self.direction = directs['right']
+                    self.x += self.speed
+                elif self.valid_turns[directs['down']]:
+                    self.direction = directs['down']
+                    self.y += self.speed
+                elif self.valid_turns[directs['up']]:
+                    self.direction = directs['up']
+                    self.y -= self.speed
+                elif self.valid_turns[directs['right']]:
+                    self.direction = directs['right']
+                    self.x += self.speed
+            elif self.valid_turns[directs['left']]:
+                if self.target[1] > self.y and self.valid_turns[directs['down']]:
+                    self.direction = directs['down']
+                    self.y += self.speed
+                if self.target[1] < self.y and self.valid_turns[directs['up']]:
+                    self.direction = directs['up']
+                    self.y -= self.speed
+                else:
+                    self.x -= self.speed
+        elif self.direction == directs['up']:
+            if self.target[0] < self.x and self.valid_turns[directs['left']]:
+                self.direction = directs['left']
+                self.x -= self.speed
+            elif self.target[1] < self.y and self.valid_turns[directs['up']]:
+                self.direction = directs['up']
+                self.y -= self.speed
+            elif not self.valid_turns[directs['up']]:
+                if self.target[0] > self.x and self.valid_turns[directs['right']]:
+                    self.direction = directs['right']
+                    self.x += self.speed
+                elif self.target[0] < self.x and self.valid_turns[directs['left']]:
+                    self.direction = directs['left']
+                    self.x -= self.speed
+                elif self.target[1] > self.y and self.valid_turns[directs['down']]:
+                    self.direction = directs['down']
+                    self.y += self.speed
+                elif self.valid_turns[directs['left']]:
+                    self.direction = directs['left']
+                    self.x -= self.speed
+                elif self.valid_turns[directs['right']]:
+                    self.direction = directs['right']
+                    self.x += self.speed
+            elif self.valid_turns[directs['up']]:
+                if self.target[0] > self.x and self.valid_turns[directs['right']]:
+                    self.direction = directs['right']
+                    self.x += self.speed
+                elif self.target[0] < self.x and self.valid_turns[directs['left']]:
+                    self.direction = directs['left']
+                    self.x -= self.speed
+                else:
+                    self.y -= self.speed
+        elif self.direction == directs['down']:
+            if self.target[1] > self.y and self.valid_turns[directs['down']]:
+                self.direction = directs['down']
+                self.y += self.speed
+            elif not self.valid_turns[directs['down']]:
+                if self.target[0] > self.x and self.valid_turns[directs['right']]:
+                    self.direction = directs['right']
+                    self.x += self.speed
+                elif self.target[0] < self.x and self.valid_turns[directs['left']]:
+                    self.direction = directs['left']
+                    self.x -= self.speed
+                elif self.target[1] < self.y and self.valid_turns[directs['up']]:
+                    self.direction = directs['up']
+                    self.y -= self.speed
+                elif self.valid_turns[directs['up']]:
+                    self.direction = directs['up']
+                    self.y -= self.speed
+                elif self.valid_turns[directs['left']]:
+                    self.direction = directs['left']
+                    self.x -= self.speed
+                elif self.valid_turns[directs['right']]:
+                    self.direction = directs['right']
+                    self.x += self.speed
+            elif self.valid_turns[directs['down']]:
+                if self.target[0] > self.x and self.valid_turns[directs['right']]:
+                    self.direction = directs['right']
+                    self.x += self.speed
+                elif self.target[0] < self.x and self.valid_turns[directs['left']]:
+                    self.direction = directs['left']
+                    self.x -= self.speed
+                else:
+                    self.y += self.speed
+
+            if self.x < -50:
+                self.x = 635
+            elif self.x > 640:
+                self.x = -45
+
+    def make_target(self):
+        target = [0, 0]
+        if self.wait:
+            target = [300, 275]
+        elif self.in_the_box and not self.dead:
+            target = [300, 260]
+        elif self.dead:
+            target = [300, 275]
+            self.speed = 6
+        elif power:
+            if pac_x > 300:
+                target[0] = 45
+            else:
+                target[0] = 578
+            if pac_y > 300:
+                target[1] = 45
+            else:
+                target[1] = 549
+        else:
+            target = pac_center
+        self.target = target
 
 def draw_field(layout):
     for y in range(len(layout)):
@@ -291,10 +477,10 @@ def draw_ui():
         screen.blit(power_text, (879, 35))
 
 
-blinky = Ghost(290, 270, directs['up'], blinky_img)
-pinky = Ghost(280, 280, directs['up'], pinky_img)
-inky = Ghost(300, 280, directs['up'], inky_img)
-clyde = Ghost(310, 260, directs['up'], clyde_img)
+blinky = Ghost(290, 270, directs['up'], blinky_img, 150)
+pinky = Ghost(280, 280, directs['up'], pinky_img, 100)
+inky = Ghost(300, 280, directs['up'], inky_img, 400)
+clyde = Ghost(300, 280, directs['down'], clyde_img, 0)
 ghosts = [blinky, pinky, inky, clyde]
 
 play = True
@@ -320,8 +506,14 @@ while play:
     check_collisions()
 
     for ghost in ghosts:
+        if ghost.delay > 0:
+            ghost.delay -= 1
+        else:
+            ghost.wait = False
         ghost.draw()
+        ghost.make_target()
         ghost.check_collisions()
+        ghost.move()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -347,5 +539,17 @@ while play:
     check_pos()
     move_pac()
 
+    dots = [1 in line or 2 in line for line in level]
+    if not any(dots):
+        play = False
+
     pygame.display.flip()
+dots = [1 in line or 2 in line for line in level]
+if any(dots):
+    text = font.render(f"LOSE!", True, 'red')
+else:
+    text = font.render(f"WIN!", True, 'green')
+screen.blit(text, (879, 60))
+pygame.display.flip()
+pygame.time.wait(3000)
 pygame.quit()
